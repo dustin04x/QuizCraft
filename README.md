@@ -323,6 +323,13 @@ Defined in `frontend/src/App.jsx`:
 - `/quiz` -> Redirects to `/play`
 - `*` -> Not Found page
 
+## Screenshots
+
+![Screenshot 1](frontend/screenshots/1.png)
+![Screenshot 2](frontend/screenshots/2.png)
+![Screenshot 3](frontend/screenshots/3.png)
+![Screenshot 4](frontend/screenshots/4.png)
+
 ## Current Product Status
 
 This is a **small full-stack product** with:
