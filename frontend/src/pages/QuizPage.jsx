@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/useAuth.jsx'
 import { QUESTION_BANK, TOPICS, TOTAL_QUESTIONS, getQuestionsByTopic } from '../data/questionBank.js'
 import {
   computeProgressSnapshot,
@@ -29,6 +30,7 @@ import {
   recordSession,
   writeProgress,
 } from '../data/progressStore.js'
+import { abandonAttempt, finishAttempt, startAttempt } from '../data/quizApi.js'
 
 const QUESTION_COUNTS = [5, 10, 15, 20]
 const TIMED_QUESTION_SECONDS = 20
@@ -128,7 +130,23 @@ function buildResults(questions, selections, timeoutFlags) {
   })
 }
 
+const MODE_MULTIPLIERS = {
+  classic: 1,
+  timed: 1.2,
+  exam: 1.35,
+  review: 0.9,
+}
+
+function computeRoundPoints({ correctAnswers, percent, modeId, questionCount }) {
+  const perfectBonus = percent === 100 ? 25 : 0
+  const volumeBonus = questionCount >= 15 ? 10 : questionCount >= 10 ? 5 : 0
+  const multiplier = MODE_MULTIPLIERS[modeId] ?? 1
+  return Math.round((correctAnswers * 10 + perfectBonus + volumeBonus) * multiplier)
+}
+
 function QuizPage() {
+  const { token, user } = useAuth()
+  const progressOwnerId = user?.id ?? 'guest'
   const [topicId, setTopicId] = useState('all')
   const [topicView, setTopicView] = useState('all')
   const [modeId, setModeId] = useState('classic')
@@ -143,7 +161,10 @@ function QuizPage() {
   const [timeLeft, setTimeLeft] = useState(TIMED_QUESTION_SECONDS)
   const [finished, setFinished] = useState(false)
   const [transitionKey, setTransitionKey] = useState(0)
-  const [progress, setProgress] = useState(() => readProgress())
+  const [progress, setProgress] = useState(() => readProgress(progressOwnerId))
+  const [activeAttemptId, setActiveAttemptId] = useState(null)
+  const [roundPoints, setRoundPoints] = useState(null)
+  const [attemptNotice, setAttemptNotice] = useState('')
 
   const currentQuestion = questions[currentIndex]
   const score = useMemo(() => results.filter((entry) => entry.isCorrect).length, [results])
@@ -241,6 +262,10 @@ function QuizPage() {
   }, [isQuestionFlowActive])
 
   useEffect(() => {
+    setProgress(readProgress(progressOwnerId))
+  }, [progressOwnerId])
+
+  useEffect(() => {
     if (!isQuestionFlowActive || !isTimedMode || revealed || timeLeft <= 0) {
       return
     }
@@ -263,8 +288,19 @@ function QuizPage() {
     }
   }, [currentIndex, isQuestionFlowActive, isTimedMode, revealed, timeLeft])
 
-  const finishGame = (selections, timeoutFlags) => {
+  const finishGame = async (selections, timeoutFlags) => {
     const finalResults = buildResults(questions, selections, timeoutFlags)
+    const correctAnswers = finalResults.filter((entry) => entry.isCorrect).length
+    const totalQuestions = finalResults.length
+    const percent = totalQuestions ? Math.round((correctAnswers / totalQuestions) * 100) : 0
+    setRoundPoints(
+      computeRoundPoints({
+        correctAnswers,
+        percent,
+        modeId,
+        questionCount: totalQuestions,
+      }),
+    )
     setResults(finalResults)
     setFinished(true)
 
@@ -275,14 +311,38 @@ function QuizPage() {
         topicLabel: selectedTopicLabel,
         results: finalResults,
       })
-      writeProgress(next)
+      writeProgress(next, progressOwnerId)
       return next
     })
+
+    if (activeAttemptId) {
+      try {
+        const data = await finishAttempt(token, activeAttemptId, {
+          correctAnswers,
+          totalQuestions,
+        })
+        setRoundPoints(data.attempt.points)
+      } catch {
+        setAttemptNotice('Score sync failed for this round, but local progress is saved.')
+      } finally {
+        setActiveAttemptId(null)
+      }
+    }
   }
 
-  const startGame = () => {
+  const startGame = async () => {
     if (!poolSize) {
       return
+    }
+
+    if (activeAttemptId) {
+      try {
+        await abandonAttempt(token, activeAttemptId)
+      } catch {
+        // Ignore tracking failures when replacing an in-progress round.
+      } finally {
+        setActiveAttemptId(null)
+      }
     }
 
     const count = Math.min(questionCount, poolSize)
@@ -295,7 +355,22 @@ function QuizPage() {
     setTimedOutFlags(Array(count).fill(false))
     setTimeLeft(TIMED_QUESTION_SECONDS)
     setFinished(false)
+    setRoundPoints(null)
+    setAttemptNotice('')
     setTransitionKey((previous) => previous + 1)
+
+    try {
+      const data = await startAttempt(token, {
+        modeId,
+        topicId,
+        topicLabel: selectedTopicLabel,
+        questionCount: count,
+      })
+      setActiveAttemptId(data.attempt.id)
+    } catch {
+      setAttemptNotice('Round started locally, but server tracking is unavailable right now.')
+      setActiveAttemptId(null)
+    }
   }
 
   const selectAnswer = (optionIndex) => {
@@ -330,7 +405,7 @@ function QuizPage() {
 
     const isLast = currentIndex >= questions.length - 1
     if (isLast) {
-      finishGame(answerSelections, timedOutFlags)
+      void finishGame(answerSelections, timedOutFlags)
       return
     }
 
@@ -344,7 +419,15 @@ function QuizPage() {
     setTransitionKey((previous) => previous + 1)
   }
 
-  const reset = () => {
+  const reset = async () => {
+    if (activeAttemptId) {
+      try {
+        await abandonAttempt(token, activeAttemptId)
+      } catch {
+        // Ignore tracking failures on manual reset.
+      }
+    }
+
     setQuestions([])
     setCurrentIndex(0)
     setSelectedIndex(null)
@@ -354,6 +437,9 @@ function QuizPage() {
     setTimedOutFlags([])
     setTimeLeft(TIMED_QUESTION_SECONDS)
     setFinished(false)
+    setActiveAttemptId(null)
+    setRoundPoints(null)
+    setAttemptNotice('')
   }
 
   const renderTopicButton = (topic) => {
@@ -529,6 +615,7 @@ function QuizPage() {
             </div>
 
             <div className="progress-panel">
+              {attemptNotice && <p className="attempt-notice">{attemptNotice}</p>}
               <div className="progress-panel-row">
                 <span>Sessions</span>
                 <strong>{progressSnapshot.sessionsPlayed}</strong>
@@ -569,10 +656,21 @@ function QuizPage() {
               Mode: <strong>{activeMode.name}</strong> | Category: <strong>{selectedTopicLabel}</strong>
             </p>
             <div className="final-metrics">
+              <span className="metric-chip points">
+                Points:{' '}
+                {roundPoints ??
+                  computeRoundPoints({
+                    correctAnswers: score,
+                    percent: scorePercent,
+                    modeId,
+                    questionCount: results.length,
+                  })}
+              </span>
               <span className="metric-chip good">Correct: {score}</span>
               <span className="metric-chip bad">Wrong: {wrongResults.length}</span>
               {timedOutCount > 0 && <span className="metric-chip bad">Timeouts: {timedOutCount}</span>}
             </div>
+            {attemptNotice && <p className="attempt-notice">{attemptNotice}</p>}
           </div>
 
           <div className="result-actions">

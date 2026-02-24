@@ -1,5 +1,11 @@
-const STORAGE_KEY = 'quizcraft-progress-v1'
+const STORAGE_KEY_PREFIX = 'quizcraft-progress-v1'
+const LEGACY_STORAGE_KEY = 'quizcraft-progress-v1'
 const MAX_SESSION_HISTORY = 40
+
+function getStorageKey(userId) {
+  const safeUserId = userId ? String(userId) : 'guest'
+  return `${STORAGE_KEY_PREFIX}:${safeUserId}`
+}
 
 function createEmptyProgress() {
   return {
@@ -29,14 +35,23 @@ function sanitizeProgress(rawValue) {
   }
 }
 
-export function readProgress() {
+export function readProgress(userId = 'guest') {
   if (typeof window === 'undefined') {
     return createEmptyProgress()
   }
 
   try {
-    const serialized = window.localStorage.getItem(STORAGE_KEY)
+    const storageKey = getStorageKey(userId)
+    const serialized = window.localStorage.getItem(storageKey)
     if (!serialized) {
+      if (String(userId) === 'guest') {
+        const legacySerialized = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+        if (legacySerialized) {
+          const migrated = sanitizeProgress(JSON.parse(legacySerialized))
+          window.localStorage.setItem(storageKey, JSON.stringify(migrated))
+          return migrated
+        }
+      }
       return createEmptyProgress()
     }
     return sanitizeProgress(JSON.parse(serialized))
@@ -45,12 +60,12 @@ export function readProgress() {
   }
 }
 
-export function writeProgress(progress) {
+export function writeProgress(progress, userId = 'guest') {
   if (typeof window === 'undefined') {
     return
   }
 
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+  window.localStorage.setItem(getStorageKey(userId), JSON.stringify(progress))
 }
 
 function createSession({ modeId, topicId, topicLabel, results }) {

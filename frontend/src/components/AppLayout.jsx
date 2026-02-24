@@ -1,8 +1,11 @@
-import { Github, Linkedin, Sparkles } from 'lucide-react'
+import { Github, Linkedin, LogOut, Sparkles } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
+import { useAuth } from '../context/useAuth.jsx'
+import UserAvatar from './UserAvatar.jsx'
 
 function AppLayout({ children }) {
   const navClassName = ({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`
+  const { isAuthenticated, isAdmin, user, logout } = useAuth()
 
   return (
     <div className="app-shell">
@@ -20,12 +23,43 @@ function AppLayout({ children }) {
           <NavLink className={navClassName} to="/play">
             Play
           </NavLink>
+          {isAuthenticated && (
+            <NavLink className={navClassName} to="/scoreboard">
+              Scoreboard
+            </NavLink>
+          )}
+          {isAdmin && (
+            <NavLink className={navClassName} to="/admin">
+              Admin
+            </NavLink>
+          )}
+          {!isAuthenticated && (
+            <NavLink className={navClassName} to="/auth">
+              Login
+            </NavLink>
+          )}
         </nav>
 
         <div className="nav-actions">
-          <Link className="button button-primary" to="/play">
-            Start Quiz
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link className="user-pill" to="/profile">
+                <UserAvatar size="xs" user={user} />
+                {user?.name || 'User'}
+              </Link>
+              <button className="button button-soft" onClick={logout} type="button">
+                <LogOut size={14} />
+                Logout
+              </button>
+              <Link className="button button-primary" to="/play">
+                Start Quiz
+              </Link>
+            </>
+          ) : (
+            <Link className="button button-primary" to="/auth">
+              Login / Register
+            </Link>
+          )}
         </div>
       </header>
 
