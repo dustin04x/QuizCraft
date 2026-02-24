@@ -33,11 +33,6 @@ function AppLayout({ children }) {
               Admin
             </NavLink>
           )}
-          {!isAuthenticated && (
-            <NavLink className={navClassName} to="/auth">
-              Login
-            </NavLink>
-          )}
         </nav>
 
         <div className="nav-actions">
