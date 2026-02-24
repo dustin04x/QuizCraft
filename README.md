@@ -13,6 +13,8 @@
 
 A modern quiz web app focused on **Computer Science** and **Cybersecurity** topics.
 
+**Live demo:** https://quiz-craft-brown.vercel.app/
+
 It includes randomized questions, smooth transitions, multiple quiz modes, authentication, scoring + leaderboard, an admin dashboard, and a responsive mobile-friendly UI.
 
 ## Live Product Scope
