@@ -1,166 +1,239 @@
-# Quiz Adaptatif Apprentissage
+# QuizCraft - IT & Cybersecurity Quiz Platform
 
-Plateforme web d'apprentissage basee sur des quiz intelligents, adaptes a chaque utilisateur selon:
-- ce qu'il veut apprendre
-- son niveau actuel
-- sa progression reelle
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![Framer Motion](https://img.shields.io/badge/Framer%20Motion-Enabled-ff4da6)](https://www.framer.com/motion/)
+[![Router](https://img.shields.io/badge/React%20Router-v7-CA4245)](https://reactrouter.com/)
+[![Lint](https://img.shields.io/badge/ESLint-Configured-4B32C3?logo=eslint)](https://eslint.org/)
+[![Mobile](https://img.shields.io/badge/Mobile-Optimized-0ea5e9)](#mobile-optimization)
+[![Local Progress](https://img.shields.io/badge/Progress-localStorage-16a34a)](#progress-tracking-local)
 
-Le but: aider chaque personne a etudier plus vite, mieux retenir, et savoir exactement quoi revoir ensuite.
+A modern quiz web app focused on **Computer Science** and **Cybersecurity** topics.
 
-## Vision Produit
+It includes randomized questions, smooth transitions, multiple quiz modes, local progress tracking, and a responsive mobile-friendly UI.
 
-Cette application combine:
-- un moteur de personnalisation local (sans cle API obligatoire)
-- `HTML + CSS + JS` (ou `React`) pour une interface moderne
-- un systeme de compte utilisateur pour sauvegarder et suivre l'apprentissage
-- un design premium avec beaucoup d'animations fluides
+## Live Product Scope
 
-## Fonctionnalites Principales
+- IT/Cyber only question bank (no generic trivia).
+- 4 quiz modes:
+1. Classic
+2. Timed Sprint
+3. Exam Mode
+4. Review Mistakes
+- Randomized questions and answer options each run.
+- Explanations after answers (or at final submission in Exam mode).
+- Final score + detailed wrong answer review.
+- Progress stored locally in the browser.
+- Contact footer links (LinkedIn + GitHub).
 
-### 1) Onboarding intelligent
-- Choix des domaines a apprendre (math, langues, code, science, etc.)
-- Definition des objectifs (examens, niveau, date cible)
-- Evaluation initiale rapide pour estimer le niveau de depart
+## Tech Stack
 
-### 2) Quiz adaptatifs (sans API IA)
-- Selection de questions selon le sujet choisi
-- Difficulte dynamique (plus dur si l'utilisateur reussit, plus guide s'il bloque)
-- Questions variees: QCM, vrai/faux, reponse courte, scenarios
-- Feedback instantane avec correction et explication claire
+- **Frontend:** React 19 + Vite
+- **Routing:** React Router v7
+- **Animation:** Framer Motion
+- **Icons:** Lucide React
+- **State/Data:** React hooks + localStorage
+- **Linting:** ESLint
 
-### 3) Comptes utilisateurs
-- Inscription / connexion (email + mot de passe, OAuth possible)
-- Profil personnel (niveau, objectifs, preferences)
-- Donnees persistees pour reprendre l'apprentissage a tout moment
+## Project Structure
 
-### 4) Dashboard de progression
-- Suivi des quiz termines
-- Score global et score par sujet
-- Temps d'etude, streak journalier, taux de reussite
-- Historique des erreurs frequentes
-- Bloc "A etudier maintenant" base sur les lacunes detectees
+```text
+Quiz Adaptatif Apprentissage/
+  README.md
+  frontend/
+    package.json
+    index.html
+    public/
+      favicon.svg
+      bg-main.jpg
+    src/
+      App.jsx
+      index.css
+      components/
+        AppLayout.jsx
+        PageTransition.jsx
+      data/
+        questions.js
+        questionsExtra.js
+        questionBank.js
+        progressStore.js
+      pages/
+        LandingPage.jsx
+        QuizPage.jsx
+        NotFoundPage.jsx
+```
 
-### 5) Recommandations intelligentes
-- Suggestions de prochains sujets
-- Plan de revision automatique
-- Priorisation des notions les plus faibles
+## Question Bank
 
-## Experience UI/UX (Design Focus)
+- Total questions: **200**
+- Total categories: **10**
+- Main source files:
+  - `frontend/src/data/questions.js`
+  - `frontend/src/data/questionsExtra.js`
+- Aggregation/mapping logic:
+  - `frontend/src/data/questionBank.js`
 
-L'interface doit etre visuellement forte et memorisable:
-- Hero section animee
-- Transitions de pages fluides
-- Cartes de quiz avec apparitions progressives (stagger)
-- Micro-interactions (hover, click, validation, progression)
-- Barres de progression animees et graphiques modernes
-- Design responsive mobile + desktop
-- Theme clair, coherent, elegant (typographie forte, couleurs bien choisies)
+Categories include:
+- Programming Fundamentals
+- Data Structures & Algorithms
+- Computer Networks
+- Operating Systems
+- Databases & SQL
+- Web Development
+- Cybersecurity Basics
+- Web Security
+- Cryptography
+- Cloud & DevOps
 
-## Stack Technique Recommandee
+## Quiz Modes
 
-### Frontend
-- `React + Vite` (recommande) ou `HTML/CSS/JS` pur
-- `CSS` moderne (variables, grid, flex, animations)
-- Bibliotheque animation: `Framer Motion` ou `GSAP`
-- Graphiques: `Chart.js` ou `Recharts`
+### 1) Classic
+- Instant feedback per question
+- Explanation shown immediately
 
-### Backend
-- `Node.js + Express` (ou `Next.js API`)
-- API REST (ou GraphQL)
+### 2) Timed Sprint
+- 20 seconds per question
+- Timeout auto-submits as no answer
 
-### Base de donnees
-- `PostgreSQL` (recommande) ou `MongoDB`
+### 3) Exam Mode
+- No instant feedback
+- Full review shown at the end
 
-### Authentification
-- JWT + refresh tokens
-- Option OAuth (Google/GitHub)
+### 4) Review Mistakes
+- Pulls from previously missed questions
+- Uses local stats to create a focused drill set
 
-### Personnalisation (sans IA externe)
-- Banque de questions avec metadonnees (`topic`, `subtopic`, `difficulty`)
-- Score de maitrise par utilisateur et par sujet (`0-100`)
-- Regles adaptatives simples:
-  - bonne reponse -> maitrise augmente
-  - mauvaise reponse -> maitrise diminue
-  - questions suivantes choisies selon les points faibles
-- Repetition espacee des erreurs frequentes
+## Progress Tracking (Local)
 
-### IA (optionnel plus tard)
-- API OpenAI possible en extension, mais non necessaire pour le MVP
+Implemented in:
+- `frontend/src/data/progressStore.js`
 
-## Architecture Fonctionnelle
+Stored in browser localStorage (`quizcraft-progress-v1`):
+- Session history
+- Per-question stats (attempts/correct/wrong)
+- Per-topic stats
+- Drill pool for mistake review
 
-Pages principales:
-1. Landing page (presentation + CTA)
-2. Login / Register
-3. Onboarding (objectifs + niveau)
-4. Quiz session (question par question)
-5. Resultats et corrections
-6. Dashboard progression
-7. Profil utilisateur + preferences
+No backend is required for progress tracking.
 
-## Logique Adaptative (Resume, sans OpenAI)
+## Mobile Optimization
 
-1. L'utilisateur choisit un sujet
-2. Le systeme estime son niveau actuel
-3. Un quiz personnalise est compose depuis la banque de questions
-4. Chaque reponse met a jour un score de maitrise (`+/- points`)
-5. Le systeme propose automatiquement:
-   - ce qui est acquis
-   - ce qui doit etre revu maintenant
-   - le prochain quiz optimal
+The app includes mobile-focused improvements:
+- Larger touch targets (44px+)
+- Better stacked nav/actions on small screens
+- Cleaner card layouts for quiz setup and results
+- Sticky primary action button in question flow on very small screens
+- Reduced visual noise effects on compact devices
 
-## Modele de Donnees (Minimum)
+## Getting Started
 
-- `User`: id, nom, email, hash_password, created_at
-- `Topic`: id, nom, categorie
-- `Quiz`: id, user_id, topic_id, difficulte, score, started_at, ended_at
-- `Question`: id, quiz_id, type, enonce, options, bonne_reponse, explication
-- `Attempt`: id, question_id, user_answer, is_correct, response_time
-- `Mastery`: id, user_id, topic_id, mastery_score, updated_at
+> Important: run npm commands **inside `frontend/`**.
 
-## Lancement Local (Exemple React)
+### Prerequisites
+
+- Node.js 18+ recommended
+- npm 9+ recommended
+
+### Install
 
 ```bash
+cd frontend
 npm install
+```
+
+### Development
+
+```bash
 npm run dev
 ```
 
-Build production:
+### Production Build
+
 ```bash
 npm run build
 npm run preview
 ```
 
-## Variables d'Environnement (Exemple)
+### Lint
 
-```env
-VITE_API_URL=http://localhost:3000
-JWT_SECRET=your_jwt_secret
-DATABASE_URL=your_database_url
+```bash
+npm run lint
 ```
 
-Optionnel (si IA externe activee plus tard):
-```env
-# VITE_OPENAI_API_KEY=your_key_here
+## Available Scripts
+
+From `frontend/package.json`:
+
+- `npm run dev` - Start Vite dev server
+- `npm run build` - Build production bundle
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint
+
+## Common Issue
+
+If you see:
+
+`npm ERR! enoent Could not read package.json`
+
+You are likely running npm in the repo root.
+
+Fix:
+
+```bash
+cd frontend
+npm run dev
 ```
 
-## Roadmap
+## Customization Guide
 
-### MVP
-- Auth + onboarding + quiz adaptatif de base
-- Dashboard simple de progression
-- Recommandation "quoi etudier maintenant"
+### Update questions
 
-### V1
-- Plus de types de quiz
-- Gamification (badges, niveau, classement)
-- Analyse avancee des performances
+Edit:
+- `frontend/src/data/questions.js`
+- `frontend/src/data/questionsExtra.js`
 
-### V2
-- Mode collaboratif (groupes, classes)
-- Support multi-langue
-- Parcours certifiants
+Then the app automatically rebuilds topic metadata from `questionBank.js`.
 
-## Objectif Final
+### Update quiz behavior
 
-Construire une application d'apprentissage belle, rapide, animee et vraiment utile, qui transforme les quiz en coach personnel intelligent.
+Edit:
+- `frontend/src/pages/QuizPage.jsx`
+
+Examples:
+- Timer duration (`TIMED_QUESTION_SECONDS`)
+- Question count presets (`QUESTION_COUNTS`)
+- Mode labels/descriptions (`MODE_OPTIONS`)
+
+### Update visual theme
+
+Edit:
+- `frontend/src/index.css`
+- `frontend/index.html` (fonts)
+- `frontend/public/favicon.svg` (favicon)
+
+## Routes
+
+Defined in `frontend/src/App.jsx`:
+
+- `/` -> Landing page
+- `/play` -> Quiz experience
+- `/quiz` -> Redirects to `/play`
+- `*` -> Not Found page
+
+## Current Product Status
+
+This is a **frontend-first product** with:
+- no authentication
+- no server API
+- local-only persistence
+
+It is ideal for:
+- portfolio/demo use
+- student self-practice
+- rapid iteration before backend integration
+
+## Author / Contacts
+
+- LinkedIn: <https://www.linkedin.com/in/skander-wali-901040391/>
+- GitHub: <https://github.com/dustin04x>
+
